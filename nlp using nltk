@@ -1,0 +1,46 @@
+import nltk
+import string
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+from nltk import pos_tag
+
+# Download required NLTK data files
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
+# Sample text
+text = "The quick brown fox jumps over the lazy dog. Dogs are not always lazy!"
+
+# 1. Sentence Tokenization
+sent_tokens = sent_tokenize(text)
+print("Sentence Tokens:\n", sent_tokens)
+
+# 2. Word Tokenization
+word_tokens = word_tokenize(text)
+print("\nWord Tokens:\n", word_tokens)
+
+# 3. Remove punctuation
+words_no_punct = [word for word in word_tokens if word not in string.punctuation]
+print("\nWithout Punctuation:\n", words_no_punct)
+
+# 4. Remove stopwords
+stop_words = set(stopwords.words('english'))
+filtered_words = [word for word in words_no_punct if word.lower() not in stop_words]
+print("\nWithout Stopwords:\n", filtered_words)
+
+# 5. Stemming
+stemmer = PorterStemmer()
+stemmed_words = [stemmer.stem(word) for word in filtered_words]
+print("\nStemmed Words:\n", stemmed_words)
+
+# 6. Lemmatization
+lemmatizer = WordNetLemmatizer()
+lemmatized_words = [lemmatizer.lemmatize(word) for word in filtered_words]
+print("\nLemmatized Words:\n", lemmatized_words)
+
+# 7. Part-of-speech tagging
+pos_tags = pos_tag(filtered_words)
+print("\nPOS Tags:\n", pos_tags)
