@@ -1,0 +1,109 @@
+Aim - Constraint Satisfaction Problems
+Code-
+from typing import Generic, TypeVar, Dict, List, Optional
+from abc import ABC, abstractmethod
+V = TypeVar('V')
+D = TypeVar('D')
+class Constraint(Generic[V, D], ABC):
+    def __init__(self, variables: List[V]) -> None:
+        self.variables = variables
+    @abstractmethod
+    def satisfied(self, assignment: Dict[V, D]) -> bool:
+        pass
+class CSP(Generic[V, D]):
+    def __init__(self, variables: List[V], domains: Dict[V, List[D]]) -> None:
+        self.variables: List[V] = variables
+        self.domains: Dict[V, List[D]] = domains
+        self.constraints: Dict[V, List[Constraint[V, D]]] = {}
+        for variable in self.variables:
+            self.constraints[variable] = []
+            if variable not in self.domains:
+                raise LookupError("Every variable should have a domain assigned to it.")
+    def add_constraint(self, constraint: Constraint[V, D]) -> None:
+        for variable in constraint.variables:
+            if variable not in self.variables:
+                raise LookupError("Variable in constraint not in CSP")
+            else:
+                self.constraints[variable].append(constraint)
+    def consistent(self, variable: V, assignment: Dict[V, D]) -> bool:
+        for constraint in self.constraints[variable]:
+            if not constraint.satisfied(assignment):
+                return False
+        return True
+    def backtracking_search(self, assignment: Dict[V, D] = {}) -> Optional[Dict[V, D]]:
+        if len(assignment) == len(self.variables):
+            return assignment
+        unassigned: List[V] = [v for v in self.variables if v not in assignment]
+        first: V = unassigned[0]
+        for value in self.domains[first]:
+            local_assignment = assignment.copy()
+            local_assignment[first] = value
+            if self.consistent(first, local_assignment):
+                result: Optional[Dict[V, D]] = self.backtracking_search(local_assignment)
+                if result is not None:
+                    return result
+        return None
+class MapColoringConstraint(Constraint[str, str]):
+    def __init__(self, place1: str, place2: str) -> None:
+        super().__init__([place1, place2])
+        self.place1: str = place1
+        self.place2: str = place2
+    def satisfied(self, assignment: Dict[str, str]) -> bool:
+        if self.place1 not in assignment or self.place2 not in assignment:
+            return True
+        return assignment[self.place1] != assignment[self.place2]
+if __name__ == "__main__":
+    variables: List[str] = ["BOX_1", "BOX_2", "BOX_4", "BOX_3", "BOX_5", "BOX_6", "BOX_7"]
+    domains: Dict[str, List[str]] = {}
+    for variable in variables:
+        domains[variable] = ["red", "green", "blue"]
+    csp: CSP[str, str] = CSP(variables, domains)
+    csp.add_constraint(MapColoringConstraint("BOX_1", "BOX_2"))
+    csp.add_constraint(MapColoringConstraint("BOX_1", "BOX_4"))
+    csp.add_constraint(MapColoringConstraint("BOX_4", "BOX_2"))
+    csp.add_constraint(MapColoringConstraint("BOX_3", "BOX_2"))
+    csp.add_constraint(MapColoringConstraint("BOX_3", "BOX_4"))
+    csp.add_constraint(MapColoringConstraint("BOX_3", "BOX_5"))
+    csp.add_constraint(MapColoringConstraint("BOX_5", "BOX_4"))
+    csp.add_constraint(MapColoringConstraint("BOX_6", "BOX_4"))
+    csp.add_constraint(MapColoringConstraint("BOX_6", "BOX_5"))
+    csp.add_constraint(MapColoringConstraint("BOX_6", "BOX_7"))
+    solution: Optional[Dict[str, str]] = csp.backtracking_search()
+    if solution is None:
+        print("No solution found!")
+    else:
+        print(solution)
+class SendMoreMoneyConstraint(Constraint[str, int]):
+    def __init__(self, letters: List[str]) -> None:
+        super().__init__(letters)
+        self.letters: List[str] = letters
+    def satisfied(self, assignment: Dict[str, int]) -> bool:
+        if len(set(assignment.values())) < len(assignment):
+            return False
+        if len(assignment) == len(self.letters):
+            s: int = assignment["S"]
+            e: int = assignment["E"]
+            n: int = assignment["N"]
+            d: int = assignment["D"]
+            m: int = assignment["M"]
+            o: int = assignment["O"]
+            r: int = assignment["R"]
+            y: int = assignment["Y"]
+            send: int = s * 1000 + e * 100 + n * 10 + d
+            more: int = m * 1000 + o * 100 + r * 10 + e
+            money: int = m * 10000 + o * 1000 + n * 100 + e * 10 + y
+            return send + more == money
+        return True
+if __name__ == "__main__":
+    letters: List[str] = ["S", "E", "N", "D", "M", "O", "R", "Y"]
+    possible_digits: Dict[str, List[int]] = {}
+    for letter in letters:
+        possible_digits[letter] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    possible_digits["M"] = [1]
+    csp: CSP[str, int] = CSP(letters, possible_digits)
+    csp.add_constraint(SendMoreMoneyConstraint(letters))
+    solution: Optional[Dict[str, int]] = csp.backtracking_search()
+    if solution is None:
+        print("No solution found!")
+    else:
+        print(solution)
